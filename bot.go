@@ -11,7 +11,7 @@ import (
 
 var (
 	charset    = []rune("0123456789abcdefghijklmnopqrstuvwxyz")
-	numWorkers = 8
+	numWorkers = 16
 )
 
 func main() {
