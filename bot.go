@@ -1,7 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -53,8 +56,7 @@ func main() {
 
 			go func(chatID int64, password string) {
 				result := crackPassword(password)
-				response := fmt.Sprintf("Результат для '%s':\n%s", password, result)
-				msg := tgbotapi.NewMessage(chatID, response)
+				msg := tgbotapi.NewMessage(chatID, result)
 				bot.Send(msg)
 			}(update.Message.Chat.ID, pass)
 		default:
@@ -72,6 +74,38 @@ func crackPassword(pass string) string {
 	var found atomic.Value
 	var wg sync.WaitGroup
 	var stopFlag int32 = 0
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		file, err := os.Open("database.json")
+		if err != nil {
+			fmt.Println("Ошибка открытия файла c популярными паролями:", err)
+			return
+		}
+		defer file.Close()
+
+		bytes, err := io.ReadAll(file)
+		if err != nil {
+			fmt.Println("Ошибка чтения файла c популярными паролями:", err)
+			return
+		}
+
+		var poppass []string
+		err = json.Unmarshal(bytes, &poppass)
+		if err != nil {
+			fmt.Println("Ошибка парсинга JSON:", err)
+			return
+		}
+
+		for _, p := range poppass {
+			if p == pass {
+				found.Store(pass)
+				atomic.StoreInt32(&stopFlag, 1)
+				return
+			}
+		}
+	}()
 
 	for w := 0; w < numWorkers; w++ {
 		wg.Add(1)
