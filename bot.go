@@ -18,7 +18,7 @@ var (
 )
 
 func main() {
-	bot, err := tgbotapi.NewBotAPI("7777787306:AAFzCRQgZ3Vq-uMmHcC0XTSdQULNMIaQzWs")
+	bot, err := tgbotapi.NewBotAPI("TOKEN")
 	if err != nil {
 		panic(err)
 	}
